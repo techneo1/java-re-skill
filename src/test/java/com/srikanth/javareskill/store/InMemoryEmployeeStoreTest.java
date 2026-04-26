@@ -61,14 +61,14 @@ class InMemoryEmployeeStoreTest {
     void findById_existingId_returnsEmployee() {
         Employee alice = buildEmployee("E001", "Alice");
         store.add(alice);
-        Optional<Employee> result = store.findById("E001");
+        Optional<Employee> result = store.findById(new EmployeeId("E001"));
         assertTrue(result.isPresent());
         assertEquals(alice, result.get());
     }
 
     @Test
     void findById_unknownId_returnsEmpty() {
-        Optional<Employee> result = store.findById("UNKNOWN");
+        Optional<Employee> result = store.findById(new EmployeeId("UNKNOWN"));
         assertTrue(result.isEmpty());
     }
 
@@ -123,7 +123,7 @@ class InMemoryEmployeeStoreTest {
 
         store.update(updated);
 
-        assertEquals("Alice Updated", store.findById("E001").get().getName());
+        assertEquals("Alice Updated", store.findById(new EmployeeId("E001")).get().getName());
         assertEquals("Alice Updated", store.findAll().get(0).getName());
     }
 
@@ -162,15 +162,15 @@ class InMemoryEmployeeStoreTest {
     @Test
     void remove_existingEmployee_removesFromBothStructures() {
         store.add(buildEmployee("E001", "Alice"));
-        store.remove("E001");
+        store.remove(new EmployeeId("E001"));
         assertEquals(0, store.size());
-        assertTrue(store.findById("E001").isEmpty());
+        assertTrue(store.findById(new EmployeeId("E001")).isEmpty());
         assertTrue(store.findAll().isEmpty());
     }
 
     @Test
     void remove_unknownId_throwsEmployeeNotFoundException() {
-        assertThrows(EmployeeNotFoundException.class, () -> store.remove("GHOST"));
+        assertThrows(EmployeeNotFoundException.class, () -> store.remove(new EmployeeId("GHOST")));
     }
 
     @Test
@@ -184,7 +184,7 @@ class InMemoryEmployeeStoreTest {
     void size_afterMultipleAddAndRemove_isCorrect() {
         store.add(buildEmployee("E001", "Alice"));
         store.add(buildEmployee("E002", "Bob"));
-        store.remove("E001");
+        store.remove(new EmployeeId("E001"));
         assertEquals(1, store.size());
     }
 }

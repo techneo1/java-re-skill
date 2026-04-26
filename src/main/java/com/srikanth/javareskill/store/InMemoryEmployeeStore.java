@@ -16,8 +16,8 @@ import java.util.*;
  */
 public class InMemoryEmployeeStore implements EmployeeStore {
 
-    /** Primary lookup structure: ID → Employee */
-    private final Map<String, Employee> idIndex = new HashMap<>();
+    /** Primary lookup structure: EmployeeId (custom key) → Employee */
+    private final Map<EmployeeId, Employee> idIndex = new HashMap<>();
 
     /** Ordered list of employees (insertion order). */
     private final List<Employee> employeeList = new ArrayList<>();
@@ -29,16 +29,17 @@ public class InMemoryEmployeeStore implements EmployeeStore {
     @Override
     public void add(Employee employee) {
         Objects.requireNonNull(employee, "employee must not be null");
-        if (idIndex.containsKey(employee.getId())) {
+        EmployeeId key = new EmployeeId(employee.getId());
+        if (idIndex.containsKey(key)) {
             throw new IllegalArgumentException(
                     "Employee with ID '" + employee.getId() + "' already exists");
         }
-        idIndex.put(employee.getId(), employee);
+        idIndex.put(key, employee);
         employeeList.add(employee);
     }
 
     @Override
-    public Optional<Employee> findById(String id) {
+    public Optional<Employee> findById(EmployeeId id) {
         Objects.requireNonNull(id, "id must not be null");
         return Optional.ofNullable(idIndex.get(id));
     }
@@ -51,22 +52,23 @@ public class InMemoryEmployeeStore implements EmployeeStore {
     @Override
     public void update(Employee employee) {
         Objects.requireNonNull(employee, "employee must not be null");
-        if (!idIndex.containsKey(employee.getId())) {
+        EmployeeId key = new EmployeeId(employee.getId());
+        if (!idIndex.containsKey(key)) {
             throw new EmployeeNotFoundException(employee.getId());
         }
         // Replace in map
-        idIndex.put(employee.getId(), employee);
+        idIndex.put(key, employee);
         // Replace in list (preserve position)
-        int index = findListIndex(employee.getId());
+        int index = findListIndex(key);
         employeeList.set(index, employee);
     }
 
     @Override
-    public void remove(String id) {
+    public void remove(EmployeeId id) {
         Objects.requireNonNull(id, "id must not be null");
         Employee removed = idIndex.remove(id);
         if (removed == null) {
-            throw new EmployeeNotFoundException(id);
+            throw new EmployeeNotFoundException(id.getValue());
         }
         employeeList.remove(removed);
     }
@@ -80,14 +82,14 @@ public class InMemoryEmployeeStore implements EmployeeStore {
     // Private helpers
     // -------------------------------------------------------------------------
 
-    private int findListIndex(String id) {
+    private int findListIndex(EmployeeId key) {
         for (int i = 0; i < employeeList.size(); i++) {
-            if (employeeList.get(i).getId().equals(id)) {
+            if (new EmployeeId(employeeList.get(i).getId()).equals(key)) {
                 return i;
             }
         }
         // Should never reach here if idIndex and employeeList are in sync
-        throw new IllegalStateException("Store is in inconsistent state for ID: " + id);
+        throw new IllegalStateException("Store is in inconsistent state for ID: " + key);
     }
 }
 

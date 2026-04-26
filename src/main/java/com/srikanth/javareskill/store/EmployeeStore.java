@@ -21,10 +21,10 @@ public interface EmployeeStore {
     /**
      * Looks up an employee by their unique ID.
      *
-     * @param id the employee ID
+     * @param id the strongly-typed employee ID key
      * @return an {@link Optional} containing the employee, or empty if not found
      */
-    Optional<Employee> findById(String id);
+    Optional<Employee> findById(EmployeeId id);
 
     /**
      * Returns an unmodifiable snapshot of all employees in insertion order.
@@ -44,10 +44,10 @@ public interface EmployeeStore {
     /**
      * Removes an employee from the store by ID.
      *
-     * @param id the employee ID
+     * @param id the strongly-typed employee ID key
      * @throws EmployeeNotFoundException if no employee with that ID exists
      */
-    void remove(String id);
+    void remove(EmployeeId id);
 
     /**
      * Returns the total number of employees in the store.
