@@ -1,9 +1,9 @@
 package com.srikanth.javareskill.repository;
 
 import com.srikanth.javareskill.domain.Employee;
+import com.srikanth.javareskill.domain.EmployeeId;
 import com.srikanth.javareskill.domain.enums.EmployeeStatus;
 import com.srikanth.javareskill.domain.enums.Role;
-import com.srikanth.javareskill.store.EmployeeId;
 
 import java.util.List;
 

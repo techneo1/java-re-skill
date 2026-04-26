@@ -2,11 +2,16 @@ package com.srikanth.javareskill.repository;
 
 import com.srikanth.javareskill.domain.Department;
 import com.srikanth.javareskill.domain.Employee;
+import com.srikanth.javareskill.domain.EmployeeId;
 import com.srikanth.javareskill.domain.enums.EmployeeStatus;
 import com.srikanth.javareskill.domain.enums.Role;
 import com.srikanth.javareskill.exception.DepartmentNotFoundException;
 import com.srikanth.javareskill.exception.EmployeeNotFoundException;
-import com.srikanth.javareskill.store.EmployeeId;
+import com.srikanth.javareskill.repository.DepartmentRepository;
+import com.srikanth.javareskill.repository.EmployeeRepository;
+import com.srikanth.javareskill.repository.GenericRepository;
+import com.srikanth.javareskill.repository.inmemory.InMemoryDepartmentRepository;
+import com.srikanth.javareskill.repository.inmemory.InMemoryEmployeeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
