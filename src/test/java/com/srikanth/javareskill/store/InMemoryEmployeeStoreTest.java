@@ -3,6 +3,7 @@ package com.srikanth.javareskill.store;
 import com.srikanth.javareskill.domain.Employee;
 import com.srikanth.javareskill.domain.enums.EmployeeStatus;
 import com.srikanth.javareskill.domain.enums.Role;
+import com.srikanth.javareskill.exception.EmployeeNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

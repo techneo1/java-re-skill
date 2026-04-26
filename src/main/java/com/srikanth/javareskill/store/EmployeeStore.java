@@ -1,6 +1,7 @@
 package com.srikanth.javareskill.store;
 
 import com.srikanth.javareskill.domain.Employee;
+import com.srikanth.javareskill.exception.EmployeeNotFoundException;
 
 import java.util.List;
 import java.util.Optional;

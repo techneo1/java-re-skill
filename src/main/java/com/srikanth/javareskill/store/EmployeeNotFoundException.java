@@ -1,12 +1,16 @@
 package com.srikanth.javareskill.store;
 
 /**
- * Thrown when an operation targets an employee ID that does not exist in the store.
+ * @deprecated Use {@link com.srikanth.javareskill.exception.EmployeeNotFoundException} instead.
+ *             This class is retained only for binary compatibility and will be removed in a
+ *             future release.
  */
-public class EmployeeNotFoundException extends RuntimeException {
+@Deprecated(forRemoval = true)
+public class EmployeeNotFoundException
+        extends com.srikanth.javareskill.exception.EmployeeNotFoundException {
 
     public EmployeeNotFoundException(String id) {
-        super("No employee found with ID: " + id);
+        super(id);
     }
 }
 
