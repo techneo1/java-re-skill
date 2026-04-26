@@ -5,6 +5,8 @@ package com.srikanth.javareskill.exception;
  * Sits in the {@link HrException} hierarchy so a single top-level handler
  * can catch all application exceptions.
  *
+ * <p>Error code: {@link ErrorCode#CONFIGURATION_ERROR} ({@code HR-CFG-001})</p>
+ *
  * <pre>
  * HrException
  * └── ConfigurationException
@@ -21,7 +23,9 @@ public final class ConfigurationException extends HrException {
      * @param message human-readable description
      */
     public ConfigurationException(String message) {
-        super(message);
+        super(ErrorCode.CONFIGURATION_ERROR,
+                ErrorContext.of(ErrorCode.CONFIGURATION_ERROR, message)
+                        .build());
         this.context = null;
     }
 
@@ -32,7 +36,10 @@ public final class ConfigurationException extends HrException {
      * @param message  human-readable description
      */
     public ConfigurationException(String context, String message) {
-        super("[" + context + "] " + message);
+        super(ErrorCode.CONFIGURATION_ERROR,
+                ErrorContext.of(ErrorCode.CONFIGURATION_ERROR, "[" + context + "] " + message)
+                        .with("configContext", context)
+                        .build());
         this.context = context;
     }
 
@@ -44,7 +51,11 @@ public final class ConfigurationException extends HrException {
      * @param cause    the underlying cause (e.g. {@link java.io.IOException})
      */
     public ConfigurationException(String context, String message, Throwable cause) {
-        super("[" + context + "] " + message, cause);
+        super(ErrorCode.CONFIGURATION_ERROR,
+                ErrorContext.of(ErrorCode.CONFIGURATION_ERROR, "[" + context + "] " + message)
+                        .with("configContext", context)
+                        .build(),
+                cause);
         this.context = context;
     }
 
@@ -53,4 +64,3 @@ public final class ConfigurationException extends HrException {
         return context;
     }
 }
-

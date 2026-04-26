@@ -6,12 +6,19 @@ package com.srikanth.javareskill.exception;
  */
 public abstract class BusinessRuleException extends HrException {
 
-    protected BusinessRuleException(String message) {
-        super(message);
+    protected BusinessRuleException(ErrorCode errorCode, String message) {
+        super(errorCode, message);
     }
 
-    protected BusinessRuleException(String message, Throwable cause) {
-        super(message, cause);
+    protected BusinessRuleException(ErrorCode errorCode, String message, Throwable cause) {
+        super(errorCode, message, cause);
+    }
+
+    protected BusinessRuleException(ErrorCode errorCode, ErrorContext errorContext) {
+        super(errorCode, errorContext);
+    }
+
+    protected BusinessRuleException(ErrorCode errorCode, ErrorContext errorContext, Throwable cause) {
+        super(errorCode, errorContext, cause);
     }
 }
-

@@ -6,6 +6,8 @@ import java.math.BigDecimal;
  * Thrown when a salary value violates business rules (e.g. negative, null, or
  * exceeds a configured maximum).
  *
+ * <p>Error code: {@link ErrorCode#INVALID_SALARY} ({@code HR-BIZ-002})</p>
+ *
  * <p>Example usage:</p>
  * <pre>{@code
  * throw new InvalidSalaryException(new BigDecimal("-500"), "Salary must not be negative");
@@ -23,7 +25,12 @@ public final class InvalidSalaryException extends BusinessRuleException {
      * @param reason       human-readable description of why the value is invalid
      */
     public InvalidSalaryException(BigDecimal invalidValue, String reason) {
-        super("Invalid salary " + invalidValue + ": " + reason);
+        super(ErrorCode.INVALID_SALARY,
+                ErrorContext.of(ErrorCode.INVALID_SALARY,
+                                "Invalid salary " + invalidValue + ": " + reason)
+                        .with("invalidValue", invalidValue)
+                        .with("reason", reason)
+                        .build());
         this.invalidValue = invalidValue;
     }
 
@@ -36,7 +43,13 @@ public final class InvalidSalaryException extends BusinessRuleException {
      * @param cause        the underlying cause
      */
     public InvalidSalaryException(BigDecimal invalidValue, String reason, Throwable cause) {
-        super("Invalid salary " + invalidValue + ": " + reason, cause);
+        super(ErrorCode.INVALID_SALARY,
+                ErrorContext.of(ErrorCode.INVALID_SALARY,
+                                "Invalid salary " + invalidValue + ": " + reason)
+                        .with("invalidValue", invalidValue)
+                        .with("reason", reason)
+                        .build(),
+                cause);
         this.invalidValue = invalidValue;
     }
 
@@ -45,4 +58,3 @@ public final class InvalidSalaryException extends BusinessRuleException {
         return invalidValue;
     }
 }
-

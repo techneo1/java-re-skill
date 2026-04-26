@@ -4,6 +4,8 @@ package com.srikanth.javareskill.exception;
  * Thrown when an attempt is made to register an e-mail address that is already
  * associated with another employee in the store.
  *
+ * <p>Error code: {@link ErrorCode#DUPLICATE_EMAIL} ({@code HR-BIZ-001})</p>
+ *
  * <p>Example usage:</p>
  * <pre>{@code
  * throw new DuplicateEmailException("alice@example.com", "E001");
@@ -25,8 +27,13 @@ public final class DuplicateEmailException extends BusinessRuleException {
      * @param existingEmployeeId the ID of the existing employee
      */
     public DuplicateEmailException(String email, String existingEmployeeId) {
-        super("Email '" + email + "' is already registered to employee ID: " + existingEmployeeId);
-        this.email = email;
+        super(ErrorCode.DUPLICATE_EMAIL,
+                ErrorContext.of(ErrorCode.DUPLICATE_EMAIL,
+                                "Email '" + email + "' is already registered to employee ID: " + existingEmployeeId)
+                        .with("email", email)
+                        .with("existingEmployeeId", existingEmployeeId)
+                        .build());
+        this.email              = email;
         this.existingEmployeeId = existingEmployeeId;
     }
 
@@ -39,8 +46,14 @@ public final class DuplicateEmailException extends BusinessRuleException {
      * @param cause              the underlying cause
      */
     public DuplicateEmailException(String email, String existingEmployeeId, Throwable cause) {
-        super("Email '" + email + "' is already registered to employee ID: " + existingEmployeeId, cause);
-        this.email = email;
+        super(ErrorCode.DUPLICATE_EMAIL,
+                ErrorContext.of(ErrorCode.DUPLICATE_EMAIL,
+                                "Email '" + email + "' is already registered to employee ID: " + existingEmployeeId)
+                        .with("email", email)
+                        .with("existingEmployeeId", existingEmployeeId)
+                        .build(),
+                cause);
+        this.email              = email;
         this.existingEmployeeId = existingEmployeeId;
     }
 
@@ -54,4 +67,3 @@ public final class DuplicateEmailException extends BusinessRuleException {
         return existingEmployeeId;
     }
 }
-

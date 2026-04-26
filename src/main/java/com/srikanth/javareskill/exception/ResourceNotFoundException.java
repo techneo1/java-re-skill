@@ -6,12 +6,19 @@ package com.srikanth.javareskill.exception;
  */
 public abstract class ResourceNotFoundException extends HrException {
 
-    protected ResourceNotFoundException(String message) {
-        super(message);
+    protected ResourceNotFoundException(ErrorCode errorCode, String message) {
+        super(errorCode, message);
     }
 
-    protected ResourceNotFoundException(String message, Throwable cause) {
-        super(message, cause);
+    protected ResourceNotFoundException(ErrorCode errorCode, String message, Throwable cause) {
+        super(errorCode, message, cause);
+    }
+
+    protected ResourceNotFoundException(ErrorCode errorCode, ErrorContext errorContext) {
+        super(errorCode, errorContext);
+    }
+
+    protected ResourceNotFoundException(ErrorCode errorCode, ErrorContext errorContext, Throwable cause) {
+        super(errorCode, errorContext, cause);
     }
 }
-

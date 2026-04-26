@@ -3,6 +3,8 @@ package com.srikanth.javareskill.exception;
 /**
  * Thrown when an operation targets an employee ID that does not exist in the store.
  *
+ * <p>Error code: {@link ErrorCode#EMPLOYEE_NOT_FOUND} ({@code HR-RES-001})</p>
+ *
  * <p>Example usage:</p>
  * <pre>{@code
  * throw new EmployeeNotFoundException("E001");
@@ -19,7 +21,11 @@ public class EmployeeNotFoundException extends ResourceNotFoundException {
      * @param employeeId the ID that could not be resolved
      */
     public EmployeeNotFoundException(String employeeId) {
-        super("No employee found with ID: " + employeeId);
+        super(ErrorCode.EMPLOYEE_NOT_FOUND,
+                ErrorContext.of(ErrorCode.EMPLOYEE_NOT_FOUND,
+                                "No employee found with ID: " + employeeId)
+                        .with("employeeId", employeeId)
+                        .build());
         this.employeeId = employeeId;
     }
 
@@ -30,7 +36,12 @@ public class EmployeeNotFoundException extends ResourceNotFoundException {
      * @param cause      the underlying cause
      */
     public EmployeeNotFoundException(String employeeId, Throwable cause) {
-        super("No employee found with ID: " + employeeId, cause);
+        super(ErrorCode.EMPLOYEE_NOT_FOUND,
+                ErrorContext.of(ErrorCode.EMPLOYEE_NOT_FOUND,
+                                "No employee found with ID: " + employeeId)
+                        .with("employeeId", employeeId)
+                        .build(),
+                cause);
         this.employeeId = employeeId;
     }
 
@@ -39,4 +50,3 @@ public class EmployeeNotFoundException extends ResourceNotFoundException {
         return employeeId;
     }
 }
-
