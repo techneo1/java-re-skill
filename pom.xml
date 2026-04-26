@@ -38,6 +38,11 @@
   </dependencies>
 
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+    </resources>
     <plugins>
       <!-- Surefire for running JUnit 5 tests -->
       <plugin>
