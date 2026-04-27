@@ -12,6 +12,17 @@ import java.util.List;
  *
  * <p>Consumers can supply a custom {@link TaxStrategy} per call, or rely on the
  * implementation's default (role-based) strategy resolution.</p>
+ *
+ * <h2>SOLID principles applied</h2>
+ * <ul>
+ *   <li><b>O – Open/Closed</b>: The {@link #process(Employee, LocalDate, TaxStrategy)}
+ *       overload accepts any {@link TaxStrategy} implementation, so new tax rules
+ *       can be introduced (open for extension) without modifying this interface or
+ *       its implementations (closed for modification).</li>
+ *   <li><b>D – Dependency Inversion</b>: Callers depend on this interface, not on
+ *       {@code PayrollServiceImpl}.  New implementations (e.g. a DB-backed one) are
+ *       drop-in replacements.</li>
+ * </ul>
  */
 public interface PayrollService {
 

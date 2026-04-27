@@ -23,6 +23,19 @@ import java.util.Optional;
  *       the interface, allowing multiple implementations (in-memory, JDBC, …).</li>
  * </ul>
  *
+ * <h2>SOLID principles applied</h2>
+ * <ul>
+ *   <li><b>S – Single Responsibility</b>: This interface declares only generic
+ *       CRUD operations.  Domain-specific query methods live in sub-interfaces
+ *       ({@link EmployeeRepository}, {@link DepartmentRepository}).</li>
+ *   <li><b>I – Interface Segregation</b>: Clients that only need read access
+ *       are not forced to depend on write methods — they can program to a
+ *       narrower type.  Domain-specific repositories extend this interface
+ *       to add only the query methods their clients actually need.</li>
+ *   <li><b>D – Dependency Inversion</b>: All service classes depend on this
+ *       interface (abstraction), not on concrete {@code InMemory*} classes.</li>
+ * </ul>
+ *
  * @param <T>  entity type
  * @param <ID> identifier type
  */

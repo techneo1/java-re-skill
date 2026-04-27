@@ -6,8 +6,10 @@ import com.srikanth.javareskill.domain.enums.EmployeeStatus;
 import com.srikanth.javareskill.domain.enums.Role;
 import com.srikanth.javareskill.exception.DuplicateEmailException;
 import com.srikanth.javareskill.exception.EmployeeNotFoundException;
+import com.srikanth.javareskill.repository.inmemory.InMemoryDepartmentRepository;
 import com.srikanth.javareskill.repository.inmemory.InMemoryEmployeeRepository;
 import com.srikanth.javareskill.service.impl.EmployeeServiceImpl;
+import com.srikanth.javareskill.service.impl.ValidationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -23,6 +25,15 @@ import static org.assertj.core.api.Assertions.*;
  *
  * <p>Covers business-rule enforcement (duplicate e-mail) as well as delegation
  * to the repository for CRUD and query operations.</p>
+ *
+ * <h2>SOLID demonstrated</h2>
+ * <ul>
+ *   <li><b>D – Dependency Inversion</b>: {@code EmployeeServiceImpl} is constructed
+ *       with a {@link ValidationService} interface (supplied here as
+ *       {@code ValidationServiceImpl}).  Swapping the implementation (e.g. a no-op
+ *       stub for isolated unit tests) requires no changes to
+ *       {@code EmployeeServiceImpl}.</li>
+ * </ul>
  */
 class EmployeeServiceTest {
 
@@ -44,7 +55,11 @@ class EmployeeServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new EmployeeServiceImpl(new InMemoryEmployeeRepository());
+        // DIP: wire concrete implementations through their abstractions.
+        InMemoryEmployeeRepository   empRepo  = new InMemoryEmployeeRepository();
+        InMemoryDepartmentRepository deptRepo = new InMemoryDepartmentRepository();
+        ValidationService validationService   = new ValidationServiceImpl(empRepo, deptRepo);
+        service = new EmployeeServiceImpl(empRepo, validationService);
     }
 
     // =========================================================================

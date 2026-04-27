@@ -19,6 +19,19 @@ import java.math.BigDecimal;
  * sub-type on failure, so callers need only wrap these calls in a single
  * {@code catch (HrException e)} block if they wish to handle all validation
  * errors uniformly.</p>
+ *
+ * <h2>SOLID principles applied</h2>
+ * <ul>
+ *   <li><b>S – Single Responsibility</b>: All validation logic is centralised here.
+ *       Service classes (e.g. {@code EmployeeServiceImpl}) delegate to this interface
+ *       rather than duplicating validation inline.</li>
+ *   <li><b>I – Interface Segregation</b>: This interface exposes only validation
+ *       operations.  Clients that only validate e-mail need not know about salary or
+ *       department checks, and can depend on a narrower abstraction if needed.</li>
+ *   <li><b>D – Dependency Inversion</b>: {@code EmployeeServiceImpl} is injected
+ *       with this interface, not with {@code ValidationServiceImpl}, so the
+ *       validation implementation can be swapped (e.g. for testing with a no-op stub).</li>
+ * </ul>
  */
 public interface ValidationService {
 

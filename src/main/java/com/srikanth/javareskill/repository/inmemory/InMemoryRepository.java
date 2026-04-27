@@ -20,6 +20,18 @@ import java.util.function.Function;
  *   <li>{@link ArrayList}{@code <T>}    – preserves insertion order for listing</li>
  * </ul>
  *
+ * <h2>SOLID principles applied</h2>
+ * <ul>
+ *   <li><b>O – Open/Closed</b>: This class is <em>closed</em> for modification —
+ *       all CRUD logic lives here and is never changed per entity type.
+ *       It is <em>open</em> for extension: concrete subclasses add entity-specific
+ *       query methods (e.g. {@code findByDepartmentId}) without touching this code.</li>
+ *   <li><b>L – Liskov Substitution</b>: {@code InMemoryEmployeeRepository} and
+ *       {@code InMemoryDepartmentRepository} extend this class and are fully
+ *       substitutable for {@link com.srikanth.javareskill.repository.GenericRepository}
+ *       anywhere in the codebase.</li>
+ * </ul>
+ *
  * @param <T>  entity type
  * @param <ID> identifier type — must implement {@code equals} / {@code hashCode}
  */

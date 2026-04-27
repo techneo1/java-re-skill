@@ -19,6 +19,19 @@ package com.srikanth.javareskill.exception;
  *
  * <p>Every instance carries an {@link ErrorCode} that uniquely identifies the
  * failure scenario and an {@link ErrorContext} with full structured details.</p>
+ *
+ * <h2>SOLID principles applied</h2>
+ * <ul>
+ *   <li><b>S – Single Responsibility</b>: Each concrete exception class encodes
+ *       exactly one failure scenario.  Common fields ({@link ErrorCode},
+ *       {@link ErrorContext}) are factored into this shared base.</li>
+ *   <li><b>L – Liskov Substitution</b>: Any {@code HrException} subclass can be
+ *       caught polymorphically as {@code HrException}, {@code ResourceNotFoundException},
+ *       or {@code BusinessRuleException} — all substitutable without altering
+ *       exception-handling behaviour.</li>
+ *   <li><b>O – Open/Closed</b>: New exception types are added by subclassing —
+ *       this base class is never modified.</li>
+ * </ul>
  */
 public abstract class HrException extends RuntimeException {
 

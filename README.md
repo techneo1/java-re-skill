@@ -49,12 +49,24 @@ src/
 │   │       ├── InMemoryRepository.java      # Abstract base (HashMap + ArrayList)
 │   │       ├── InMemoryEmployeeRepository.java
 │   │       └── InMemoryDepartmentRepository.java
-│   └── service/                             # ③ SERVICE LAYER
-│       ├── EmployeeService.java             # Employee business-logic contract
-│       ├── DepartmentService.java           # Department business-logic contract
-│       └── impl/
-│           ├── EmployeeServiceImpl.java     # Validates rules, delegates to repo
-│           └── DepartmentServiceImpl.java
+│   ├── service/                             # ③ SERVICE LAYER
+│   │   ├── EmployeeService.java             # Employee business-logic contract
+│   │   ├── DepartmentService.java           # Department business-logic contract
+│   │   ├── ValidationService.java           # Validation contract (email, salary, dept)
+│   │   └── impl/
+│   │       ├── EmployeeServiceImpl.java     # Validates rules, delegates to repo
+│   │       ├── DepartmentServiceImpl.java
+│   │       └── ValidationServiceImpl.java   # Concrete validation logic
+│   └── payroll/                             # ④ PAYROLL LAYER
+│       ├── PayrollService.java              # Payroll processing contract
+│       ├── impl/
+│       │   └── PayrollServiceImpl.java
+│       └── strategy/
+│           ├── TaxStrategy.java             # Strategy interface
+│           ├── TaxStrategyFactory.java      # Role → strategy registry (extensible)
+│           ├── FlatRateTaxStrategy.java
+│           ├── ProgressiveTaxStrategy.java
+│           └── ExemptTaxStrategy.java
 └── main/resources/
     └── app.properties
 ```
@@ -82,6 +94,68 @@ src/
 
 ---
 
+## SOLID Principles
+
+The entire codebase is designed around the SOLID principles. The table below maps
+each principle to concrete locations in the source tree.
+
+### S — Single Responsibility Principle
+
+> *A class should have only one reason to change.*
+
+| Where | What |
+|-------|------|
+| `Employee.java` | Represents only employee state — no persistence, no validation. |
+| `ValidationService` / `ValidationServiceImpl` | All validation rules (email uniqueness, salary range, department existence) live here and nowhere else. `EmployeeServiceImpl.hire()` **delegates** to `ValidationService` instead of duplicating the check inline. |
+| `PayrollServiceImpl` | Responsible only for payroll record generation; delegates every tax calculation to an injected `TaxStrategy`. |
+| `ConfigLoader` | Solely responsible for reading `.properties` files; `AppConfig` holds the resulting values. |
+| Each exception class | Every concrete exception (`EmployeeNotFoundException`, `DuplicateEmailException`, …) encodes exactly one failure scenario. Shared fields are factored into the `HrException` base. |
+
+### O — Open/Closed Principle
+
+> *Software entities should be open for extension, but closed for modification.*
+
+| Where | What |
+|-------|------|
+| `TaxStrategy` interface | Adding a new tax rule (e.g. `SurchargeStrategy`) requires only implementing `TaxStrategy` — `PayrollServiceImpl` and `PayrollService` are never touched. |
+| `TaxStrategyFactory.register(Role, TaxStrategy)` | The built-in role→strategy defaults are *closed for modification*, but `register()` allows callers to add or override mappings at runtime *without editing the factory source*. |
+| `InMemoryRepository<T, ID>` | The CRUD engine is closed — subclasses extend it by adding domain-specific queries (`findByDepartmentId`, `findByLocation`) without modifying `InMemoryRepository`. |
+| `HrException` hierarchy | New exception categories are added by subclassing `HrException` / `ResourceNotFoundException` / `BusinessRuleException` — the base classes are never changed. |
+
+### L — Liskov Substitution Principle
+
+> *Objects of a subtype must be substitutable for objects of their supertype.*
+
+| Where | What |
+|-------|------|
+| `InMemoryEmployeeRepository` / `InMemoryDepartmentRepository` | Both extend `InMemoryRepository<T, ID>` and implement their respective domain interfaces. Either can be substituted for `GenericRepository<T, ID>` anywhere. |
+| `FlatRateTaxStrategy`, `ProgressiveTaxStrategy`, `ExemptTaxStrategy` | All honour the `TaxStrategy` contract (non-null, non-negative result ≤ grossSalary). They are fully interchangeable wherever `TaxStrategy` is expected — demonstrated by the `strategyIsSwappable` test. |
+| `EmployeeNotFoundException` / `DepartmentNotFoundException` | Both are caught interchangeably as `ResourceNotFoundException` or as `HrException`; the polymorphic catch tests in `HrExceptionHierarchyTest` verify this. |
+
+### I — Interface Segregation Principle
+
+> *Clients should not be forced to depend on methods they do not use.*
+
+| Where | What |
+|-------|------|
+| `GenericRepository<T, ID>` | Declares only generic CRUD operations. Domain-specific queries are added in narrower sub-interfaces (`EmployeeRepository`, `DepartmentRepository`). A component that only needs `findAll()` and `save()` can depend on `GenericRepository` without being coupled to HR-specific methods. |
+| `EmployeeRepository` / `DepartmentRepository` | Each extends `GenericRepository` and adds only the finders relevant to that aggregate (e.g. `findByDepartmentId`, `findByLocation`). |
+| `ValidationService` | Focused exclusively on validation. Service classes that have no validation concern are not forced to depend on this interface. |
+| `TaxStrategy` | A minimal two-method contract (`calculateTax`, `name`). Implementations are not burdened with unrelated concerns. |
+
+### D — Dependency Inversion Principle
+
+> *High-level modules should not depend on low-level modules; both should depend on abstractions.*
+
+| Where | What |
+|-------|------|
+| `EmployeeServiceImpl(EmployeeRepository, ValidationService)` | Depends on two *interfaces*, not on `InMemoryEmployeeRepository` or `ValidationServiceImpl`. The concrete implementations are injected by the caller (`App.java`). |
+| `PayrollServiceImpl.process(Employee, LocalDate, TaxStrategy)` | Accepts the `TaxStrategy` abstraction; the caller decides which concrete strategy to pass. |
+| `App.java` wiring | The entry point is the only place where concrete classes appear in `new` expressions. All service variables are declared as interface types. |
+| All repository usages | Every service depends on `EmployeeRepository` / `DepartmentRepository` (interfaces), never on `InMemory*` classes directly. |
+
+---
+
 ## Key Concepts Covered
 
 - **Domain modelling** – entities, value objects (`EmployeeId`), enums
@@ -91,6 +165,7 @@ src/
 - **Service layer** – business-rule enforcement (duplicate e-mail, not-found)
 - **Configuration loading** – reading `.properties` files at runtime
 - **Unit testing** – JUnit 5 nested tests, AssertJ fluent assertions
+- **SOLID principles** – applied and documented throughout
 
 ---
 

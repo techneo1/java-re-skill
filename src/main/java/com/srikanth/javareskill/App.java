@@ -9,8 +9,10 @@ import com.srikanth.javareskill.repository.inmemory.InMemoryDepartmentRepository
 import com.srikanth.javareskill.repository.inmemory.InMemoryEmployeeRepository;
 import com.srikanth.javareskill.service.DepartmentService;
 import com.srikanth.javareskill.service.EmployeeService;
+import com.srikanth.javareskill.service.ValidationService;
 import com.srikanth.javareskill.service.impl.DepartmentServiceImpl;
 import com.srikanth.javareskill.service.impl.EmployeeServiceImpl;
+import com.srikanth.javareskill.service.impl.ValidationServiceImpl;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -22,14 +24,27 @@ import java.time.LocalDate;
  * <pre>
  *   domain  →  repository (in-memory)  →  service
  * </pre>
+ *
+ * <h2>SOLID wiring illustrated here</h2>
+ * <ul>
+ *   <li><b>D – Dependency Inversion</b>: All service variables are declared as
+ *       interface types ({@code EmployeeService}, {@code ValidationService}).
+ *       Concrete classes only appear in the {@code new} expressions below — the
+ *       rest of the code is free of implementation details.</li>
+ * </ul>
  */
 public class App {
 
     public static void main(String[] args) {
 
-        // ── Wire up the layers ─────────────────────────────────────────────
-        DepartmentService deptService = new DepartmentServiceImpl(new InMemoryDepartmentRepository());
-        EmployeeService   empService  = new EmployeeServiceImpl(new InMemoryEmployeeRepository());
+        // ── Wire up the layers (Dependency Inversion: program to interfaces) ──
+        InMemoryDepartmentRepository deptRepo = new InMemoryDepartmentRepository();
+        InMemoryEmployeeRepository   empRepo  = new InMemoryEmployeeRepository();
+
+        // DIP: ValidationService is an abstraction; EmployeeServiceImpl depends on it.
+        ValidationService validationService = new ValidationServiceImpl(empRepo, deptRepo);
+        DepartmentService deptService = new DepartmentServiceImpl(deptRepo);
+        EmployeeService   empService  = new EmployeeServiceImpl(empRepo, validationService);
 
         // ── Department layer ──────────────────────────────────────────────
         Department engineering = Department.builder()

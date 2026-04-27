@@ -15,6 +15,22 @@ import java.math.BigDecimal;
  *   <li>The returned value must be ≤ {@code grossSalary}.</li>
  * </ul>
  * </p>
+ *
+ * <h2>SOLID principles applied</h2>
+ * <ul>
+ *   <li><b>O – Open/Closed</b>: New tax behaviours are added by implementing
+ *       this interface — existing strategies and the payroll service are never
+ *       modified.</li>
+ *   <li><b>L – Liskov Substitution</b>: Every concrete strategy
+ *       ({@code FlatRateTaxStrategy}, {@code ProgressiveTaxStrategy},
+ *       {@code ExemptTaxStrategy}) honours the contract above, making them
+ *       fully interchangeable wherever a {@code TaxStrategy} is expected.</li>
+ *   <li><b>I – Interface Segregation</b>: This interface declares exactly two
+ *       methods that are always needed together.  Clients are not burdened with
+ *       unrelated methods.</li>
+ *   <li><b>D – Dependency Inversion</b>: {@code PayrollServiceImpl} depends on
+ *       this abstraction, not on any concrete strategy class.</li>
+ * </ul>
  */
 public interface TaxStrategy {
 
