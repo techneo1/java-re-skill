@@ -600,6 +600,104 @@ class EmployeeServiceTest {
     }
 
     // =========================================================================
+    // EmployeeServiceImpl — backward-compat constructor (no ValidationService)
+    // =========================================================================
+
+    /**
+     * Tests for the single-arg constructor path where {@code validationService == null}.
+     *
+     * <p>When constructed with only a repository, {@code EmployeeServiceImpl} falls
+     * back to an inline e-mail uniqueness scan via {@code repository.findAll()}.
+     * This nested class exercises every branch of that fallback path without
+     * any Mockito injection — it builds the SUT manually to use the single-arg
+     * constructor.</p>
+     */
+    @Nested
+    @DisplayName("Backward-compat constructor (no ValidationService)")
+    class BackwardCompatConstructorTests {
+
+        // Local captors for the inline tests (cannot reuse class-level ones
+        // because the SUT here is built manually, not via @InjectMocks)
+
+        @Test
+        @DisplayName("hire() succeeds when no duplicate email exists in repository")
+        void hire_noDuplicate_savesEmployee() {
+            // Build SUT via single-arg constructor (validationService = null)
+            when(repository.findAll()).thenReturn(Collections.emptyList());
+
+            EmployeeServiceImpl sut = new EmployeeServiceImpl(repository);
+            sut.hire(ALICE);
+
+            verify(repository).save(ALICE);
+        }
+
+        @Test
+        @DisplayName("hire() calls repository.findAll() for inline email uniqueness check")
+        void hire_inlinePath_callsFindAll() {
+            when(repository.findAll()).thenReturn(Collections.emptyList());
+
+            EmployeeServiceImpl sut = new EmployeeServiceImpl(repository);
+            sut.hire(ALICE);
+
+            verify(repository, atLeastOnce()).findAll();
+        }
+
+        @Test
+        @DisplayName("hire() throws DuplicateEmailException when email already exists (inline check)")
+        void hire_duplicateEmail_inlinePath_throwsDuplicateEmailException() {
+            // Repository already contains ALICE; hiring with the same email must fail
+            when(repository.findAll()).thenReturn(List.of(ALICE));
+
+            EmployeeServiceImpl sut = new EmployeeServiceImpl(repository);
+
+            Employee duplicate = buildEmployee(
+                    "E099", ALICE.getEmail(), "D1", Role.MANAGER, EmployeeStatus.ACTIVE);
+
+            assertThatThrownBy(() -> sut.hire(duplicate))
+                    .isInstanceOf(DuplicateEmailException.class)
+                    .hasFieldOrPropertyWithValue("email", ALICE.getEmail());
+        }
+
+        @Test
+        @DisplayName("hire() email check is case-insensitive on the inline path")
+        void hire_duplicateEmail_caseInsensitive_inlinePath() {
+            Employee upperCase = buildEmployee(
+                    "E001", "ALICE@EXAMPLE.COM", "D1", Role.ENGINEER, EmployeeStatus.ACTIVE);
+            when(repository.findAll()).thenReturn(List.of(upperCase));
+
+            EmployeeServiceImpl sut = new EmployeeServiceImpl(repository);
+
+            Employee lowerCase = buildEmployee(
+                    "E002", "alice@example.com", "D1", Role.ENGINEER, EmployeeStatus.ACTIVE);
+
+            assertThatThrownBy(() -> sut.hire(lowerCase))
+                    .isInstanceOf(DuplicateEmailException.class);
+        }
+
+        @Test
+        @DisplayName("hire() does NOT call repository.save() when inline duplicate check fails")
+        void hire_duplicateEmail_inlinePath_neverSaves() {
+            when(repository.findAll()).thenReturn(List.of(ALICE));
+
+            EmployeeServiceImpl sut = new EmployeeServiceImpl(repository);
+            Employee dup = buildEmployee("E099", ALICE.getEmail(), "D1", Role.HR, EmployeeStatus.ACTIVE);
+
+            assertThatThrownBy(() -> sut.hire(dup))
+                    .isInstanceOf(DuplicateEmailException.class);
+
+            verify(repository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("null repository throws NullPointerException")
+        void nullRepository_throwsNpe() {
+            assertThatNullPointerException()
+                    .isThrownBy(() -> new EmployeeServiceImpl((EmployeeRepository) null))
+                    .withMessageContaining("repository must not be null");
+        }
+    }
+
+    // =========================================================================
     // headcount()
     // =========================================================================
 
