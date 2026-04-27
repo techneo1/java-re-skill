@@ -12,6 +12,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -33,6 +35,10 @@ import static org.mockito.Mockito.*;
  * {@link ValidationService}; {@code @InjectMocks} wires them into
  * {@link EmployeeServiceImpl} via constructor injection.</p>
  *
+ * <p>{@code @Captor} fields declare reusable {@link ArgumentCaptor}s that let each
+ * test inspect the <em>exact</em> argument values the service passed to its
+ * collaborators — going beyond a simple "was the method called?" check.</p>
+ *
  * <h2>SOLID principles demonstrated</h2>
  * <ul>
  *   <li><b>D – Dependency Inversion</b>: {@code EmployeeServiceImpl} depends on the
@@ -53,6 +59,34 @@ class EmployeeServiceTest {
 
     @InjectMocks
     private EmployeeServiceImpl service;
+
+    // -------------------------------------------------------------------------
+    // Class-level ArgumentCaptors (reused across nested classes)
+    // -------------------------------------------------------------------------
+
+    /** Captures the {@link Employee} object passed to {@code repository.save()} or {@code repository.update()}. */
+    @Captor
+    private ArgumentCaptor<Employee> employeeCaptor;
+
+    /** Captures the {@link EmployeeId} passed to {@code repository.findById()} or {@code repository.deleteById()}. */
+    @Captor
+    private ArgumentCaptor<EmployeeId> employeeIdCaptor;
+
+    /** Captures the email {@link String} passed to {@code validationService.validateEmailUniqueness()}. */
+    @Captor
+    private ArgumentCaptor<String> emailCaptor;
+
+    /** Captures the department-ID {@link String} passed to {@code repository.findByDepartmentId()}. */
+    @Captor
+    private ArgumentCaptor<String> departmentIdCaptor;
+
+    /** Captures the {@link EmployeeStatus} passed to {@code repository.findByStatus()}. */
+    @Captor
+    private ArgumentCaptor<EmployeeStatus> statusCaptor;
+
+    /** Captures the {@link Role} passed to {@code repository.findByRole()}. */
+    @Captor
+    private ArgumentCaptor<Role> roleCaptor;
 
     // -------------------------------------------------------------------------
     // Test-data helpers
@@ -98,6 +132,45 @@ class EmployeeServiceTest {
             verify(validationService).validateEmailUniqueness(ALICE.getEmail());
         }
 
+        // --- ArgumentCaptor: inspect the exact email forwarded to ValidationService ---
+
+        @Test
+        @DisplayName("captures and verifies exact email forwarded to ValidationService")
+        void hire_capturesEmailPassedToValidationService() {
+            service.hire(ALICE);
+
+            verify(validationService).validateEmailUniqueness(emailCaptor.capture());
+
+            assertThat(emailCaptor.getValue())
+                    .as("email forwarded to ValidationService")
+                    .isEqualTo("alice@example.com");
+        }
+
+        @Test
+        @DisplayName("captures and verifies exact Employee forwarded to repository.save()")
+        void hire_capturesEmployeePassedToRepository() {
+            service.hire(ALICE);
+
+            verify(repository).save(employeeCaptor.capture());
+            Employee saved = employeeCaptor.getValue();
+
+            assertThat(saved.getId()).isEqualTo("E001");
+            assertThat(saved.getEmail()).isEqualTo("alice@example.com");
+            assertThat(saved.getRole()).isEqualTo(Role.ENGINEER);
+            assertThat(saved.getDepartmentId()).isEqualTo("D1");
+            assertThat(saved.getStatus()).isEqualTo(EmployeeStatus.ACTIVE);
+        }
+
+        @Test
+        @DisplayName("email captured by ValidationService matches the employee's own email field")
+        void hire_emailCapturedMatchesEmployeeEmail() {
+            service.hire(BOB);
+
+            verify(validationService).validateEmailUniqueness(emailCaptor.capture());
+
+            assertThat(emailCaptor.getValue()).isEqualTo(BOB.getEmail());
+        }
+
         @Test
         @DisplayName("saves employee to repository when validation passes")
         void hire_savesEmployee_whenValid() {
@@ -135,6 +208,15 @@ class EmployeeServiceTest {
                     .isInstanceOf(DuplicateEmailException.class);
 
             verify(repository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("ValidationService called exactly once per hire() invocation")
+        void hire_validationCalledExactlyOnce() {
+            service.hire(ALICE);
+
+            verify(validationService, times(1)).validateEmailUniqueness(any());
+            verifyNoMoreInteractions(validationService);
         }
     }
 
@@ -174,6 +256,37 @@ class EmployeeServiceTest {
 
             verify(repository, times(1)).findById(id);
         }
+
+        // --- ArgumentCaptor: confirm the exact EmployeeId object forwarded ---
+
+        @Test
+        @DisplayName("captures and verifies the exact EmployeeId passed to repository.findById()")
+        void findById_capturesEmployeeIdPassedToRepository() {
+            EmployeeId id = new EmployeeId("E001");
+            when(repository.findById(any())).thenReturn(Optional.of(ALICE));
+
+            service.findById(id);
+
+            verify(repository).findById(employeeIdCaptor.capture());
+            assertThat(employeeIdCaptor.getValue())
+                    .as("captured EmployeeId value")
+                    .isEqualTo(new EmployeeId("E001"));
+        }
+
+        @Test
+        @DisplayName("EmployeeId is normalised to upper-case before reaching repository")
+        void findById_idNormalisedToUpperCase() {
+            // EmployeeId normalises its value to upper-case in its constructor,
+            // so 'e001' and 'E001' must resolve to the same key.
+            EmployeeId lowerCaseId = new EmployeeId("e001");
+            when(repository.findById(any())).thenReturn(Optional.of(ALICE));
+
+            service.findById(lowerCaseId);
+
+            verify(repository).findById(employeeIdCaptor.capture());
+            assertThat(employeeIdCaptor.getValue().getValue())
+                    .isEqualTo("E001");    // normalised to upper-case
+        }
     }
 
     // =========================================================================
@@ -199,6 +312,17 @@ class EmployeeServiceTest {
 
             assertThat(service.findAll()).isEmpty();
         }
+
+        @Test
+        @DisplayName("repository.findAll() is called exactly once with no arguments")
+        void findAll_interactionVerified() {
+            when(repository.findAll()).thenReturn(List.of(ALICE));
+
+            service.findAll();
+
+            verify(repository, times(1)).findAll();
+            verifyNoMoreInteractions(repository);
+        }
     }
 
     // =========================================================================
@@ -217,6 +341,27 @@ class EmployeeServiceTest {
             verify(repository).update(ALICE);
         }
 
+        // --- ArgumentCaptor: inspect every field of the Employee sent to update() ---
+
+        @Test
+        @DisplayName("captures and verifies entire Employee forwarded to repository.update()")
+        void update_capturesEmployeePassedToRepository() {
+            Employee promoted = buildEmployee(
+                    "E001", "alice@example.com", "D1", Role.SENIOR_ENGINEER, EmployeeStatus.ACTIVE);
+
+            service.update(promoted);
+
+            verify(repository).update(employeeCaptor.capture());
+            Employee captured = employeeCaptor.getValue();
+
+            assertThat(captured.getId()).isEqualTo("E001");
+            assertThat(captured.getRole())
+                    .as("role should reflect the promotion")
+                    .isEqualTo(Role.SENIOR_ENGINEER);
+            assertThat(captured.getEmail()).isEqualTo("alice@example.com");
+            assertThat(captured.getStatus()).isEqualTo(EmployeeStatus.ACTIVE);
+        }
+
         @Test
         @DisplayName("propagates EmployeeNotFoundException from repository")
         void update_notFound_propagatesException() {
@@ -225,6 +370,15 @@ class EmployeeServiceTest {
 
             assertThatThrownBy(() -> service.update(ALICE))
                     .isInstanceOf(EmployeeNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("repository.update() called exactly once; no other repository interactions")
+        void update_onlyUpdateCalled() {
+            service.update(ALICE);
+
+            verify(repository, times(1)).update(any());
+            verifyNoMoreInteractions(repository);
         }
     }
 
@@ -244,6 +398,31 @@ class EmployeeServiceTest {
             service.terminate(id);
 
             verify(repository).deleteById(id);
+        }
+
+        // --- ArgumentCaptor: confirm the exact EmployeeId forwarded to deleteById() ---
+
+        @Test
+        @DisplayName("captures and verifies exact EmployeeId passed to repository.deleteById()")
+        void terminate_capturesEmployeeIdPassedToRepository() {
+            EmployeeId id = new EmployeeId("E002");
+
+            service.terminate(id);
+
+            verify(repository).deleteById(employeeIdCaptor.capture());
+            assertThat(employeeIdCaptor.getValue())
+                    .as("captured EmployeeId for deletion")
+                    .isEqualTo(new EmployeeId("E002"));
+        }
+
+        @Test
+        @DisplayName("repository.deleteById() called exactly once; no save/update side-effects")
+        void terminate_onlyDeleteCalled() {
+            service.terminate(new EmployeeId("E001"));
+
+            verify(repository, times(1)).deleteById(any());
+            verify(repository, never()).save(any());
+            verify(repository, never()).update(any());
         }
 
         @Test
@@ -291,6 +470,19 @@ class EmployeeServiceTest {
 
             verify(repository).findByDepartmentId("D1");
         }
+
+        // --- ArgumentCaptor: ensure the raw department-ID String is forwarded as-is ---
+
+        @Test
+        @DisplayName("captures and verifies exact department-ID string forwarded to repository")
+        void findByDepartment_capturesDepartmentId() {
+            service.findByDepartment("DEPT-42");
+
+            verify(repository).findByDepartmentId(departmentIdCaptor.capture());
+            assertThat(departmentIdCaptor.getValue())
+                    .as("department ID must be forwarded unchanged")
+                    .isEqualTo("DEPT-42");
+        }
     }
 
     // =========================================================================
@@ -325,6 +517,28 @@ class EmployeeServiceTest {
             service.findByStatus(EmployeeStatus.ACTIVE);
 
             verify(repository).findByStatus(EmployeeStatus.ACTIVE);
+        }
+
+        // --- ArgumentCaptor: verify the exact EmployeeStatus enum constant forwarded ---
+
+        @Test
+        @DisplayName("captures and verifies EmployeeStatus.ACTIVE forwarded to repository")
+        void findByStatus_capturesActiveStatus() {
+            service.findByStatus(EmployeeStatus.ACTIVE);
+
+            verify(repository).findByStatus(statusCaptor.capture());
+            assertThat(statusCaptor.getValue())
+                    .as("status forwarded to repository")
+                    .isEqualTo(EmployeeStatus.ACTIVE);
+        }
+
+        @Test
+        @DisplayName("captures and verifies EmployeeStatus.INACTIVE forwarded to repository")
+        void findByStatus_capturesInactiveStatus() {
+            service.findByStatus(EmployeeStatus.INACTIVE);
+
+            verify(repository).findByStatus(statusCaptor.capture());
+            assertThat(statusCaptor.getValue()).isEqualTo(EmployeeStatus.INACTIVE);
         }
     }
 
@@ -361,6 +575,28 @@ class EmployeeServiceTest {
 
             verify(repository).findByRole(Role.MANAGER);
         }
+
+        // --- ArgumentCaptor: verify the exact Role enum constant forwarded ---
+
+        @Test
+        @DisplayName("captures and verifies Role.MANAGER forwarded to repository")
+        void findByRole_capturesManagerRole() {
+            service.findByRole(Role.MANAGER);
+
+            verify(repository).findByRole(roleCaptor.capture());
+            assertThat(roleCaptor.getValue())
+                    .as("role forwarded to repository")
+                    .isEqualTo(Role.MANAGER);
+        }
+
+        @Test
+        @DisplayName("captures and verifies Role.DIRECTOR forwarded to repository")
+        void findByRole_capturesDirectorRole() {
+            service.findByRole(Role.DIRECTOR);
+
+            verify(repository).findByRole(roleCaptor.capture());
+            assertThat(roleCaptor.getValue()).isEqualTo(Role.DIRECTOR);
+        }
     }
 
     // =========================================================================
@@ -393,6 +629,16 @@ class EmployeeServiceTest {
             service.headcount();
 
             verify(repository, times(1)).count();
+        }
+
+        @Test
+        @DisplayName("no other repository methods called during headcount()")
+        void headcount_noSideEffects() {
+            service.headcount();
+
+            verify(repository).count();
+            verifyNoMoreInteractions(repository);
+            verifyNoInteractions(validationService);
         }
     }
 }
