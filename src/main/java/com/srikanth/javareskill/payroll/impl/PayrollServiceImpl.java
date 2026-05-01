@@ -8,7 +8,6 @@ import com.srikanth.javareskill.payroll.strategy.TaxStrategyFactory;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -56,10 +55,9 @@ public final class PayrollServiceImpl implements PayrollService {
         Objects.requireNonNull(employees,    "employees must not be null");
         Objects.requireNonNull(payrollMonth, "payrollMonth must not be null");
 
-        List<PayrollRecord> records = new ArrayList<>(employees.size());
-        for (Employee emp : employees) {
-            records.add(process(emp, payrollMonth));
-        }
+        List<PayrollRecord> records = employees.stream()
+                .map(emp -> process(emp, payrollMonth))
+                .toList();
         return List.copyOf(records);
     }
 }

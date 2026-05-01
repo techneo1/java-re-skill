@@ -111,12 +111,11 @@ public abstract class InMemoryRepository<T, ID> implements GenericRepository<T, 
     }
 
     private int listIndexOf(ID key) {
-        for (int i = 0; i < entityList.size(); i++) {
-            if (keyExtractor.apply(entityList.get(i)).equals(key)) {
-                return i;
-            }
-        }
-        throw new IllegalStateException("Repository in inconsistent state for key: " + key);
+        return java.util.stream.IntStream.range(0, entityList.size())
+                .filter(i -> keyExtractor.apply(entityList.get(i)).equals(key))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "Repository in inconsistent state for key: " + key));
     }
 }
 

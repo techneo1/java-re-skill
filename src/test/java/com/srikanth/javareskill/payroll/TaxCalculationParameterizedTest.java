@@ -257,7 +257,7 @@ class TaxCalculationParameterizedTest {
                     // ── spanning both brackets ──
                     Arguments.of("10001", "500.25"),  // 500 + 1 * 25%
                     Arguments.of("20000", "3000.00"), // 500 + 10000 * 25%
-                    Arguments.of("50000","13500.00")  // 500 + 40000 * 25%
+                    Arguments.of("50000","10500.00")  // 500 + 40000 * 25%
             );
         }
 

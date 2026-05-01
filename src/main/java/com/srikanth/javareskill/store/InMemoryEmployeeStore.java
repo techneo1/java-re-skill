@@ -84,13 +84,11 @@ public class InMemoryEmployeeStore implements EmployeeStore {
     // -------------------------------------------------------------------------
 
     private int findListIndex(EmployeeId key) {
-        for (int i = 0; i < employeeList.size(); i++) {
-            if (new EmployeeId(employeeList.get(i).getId()).equals(key)) {
-                return i;
-            }
-        }
-        // Should never reach here if idIndex and employeeList are in sync
-        throw new IllegalStateException("Store is in inconsistent state for ID: " + key);
+        return java.util.stream.IntStream.range(0, employeeList.size())
+                .filter(i -> new EmployeeId(employeeList.get(i).getId()).equals(key))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "Store is in inconsistent state for ID: " + key));
     }
 }
 
