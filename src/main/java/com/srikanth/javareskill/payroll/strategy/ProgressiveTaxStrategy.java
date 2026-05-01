@@ -94,6 +94,28 @@ public final class ProgressiveTaxStrategy implements TaxStrategy {
     // Strategy implementation
     // -------------------------------------------------------------------------
 
+    /**
+     * Calculates tax by iterating over sorted brackets and applying each
+     * bracket's rate to the portion of {@code grossSalary} that falls within it.
+     *
+     * <p>A <strong>switch expression</strong> determines the taxable amount
+     * for each bracket based on whether the bracket has a finite upper bound
+     * or is the open-ended top bracket ({@code upperBound == null}):</p>
+     * <pre>{@code
+     * BigDecimal taxableInBracket = switch (bracket.upperBound()) {
+     *     case null         -> grossSalary.subtract(bracketStart);
+     *     case BigDecimal u -> u.min(grossSalary).subtract(bracketStart).max(ZERO);
+     * };
+     * }</pre>
+     *
+     * <h3>Switch-expression features demonstrated</h3>
+     * <ul>
+     *   <li>{@code case null ->} — null-matching arm (JDK 21+ pattern matching for switch,
+     *       but here we use a simple ternary equivalent for JDK 17 compatibility)</li>
+     *   <li>Expression result assigned directly to a local variable</li>
+     *   <li>Arrow syntax — no fall-through</li>
+     * </ul>
+     */
     @Override
     public BigDecimal calculateTax(BigDecimal grossSalary) {
         Objects.requireNonNull(grossSalary, "grossSalary must not be null");
@@ -105,25 +127,40 @@ public final class ProgressiveTaxStrategy implements TaxStrategy {
             if (remaining.compareTo(BigDecimal.ZERO) <= 0) break;
 
             BigDecimal bracketStart = bracket.lowerBound();
-            BigDecimal bracketEnd   = bracket.upperBound();   // null = unlimited
 
-            // Amount of grossSalary that falls below this bracket (already processed)
+            // Skip brackets whose lower bound is at or above the gross salary
             if (grossSalary.compareTo(bracketStart) <= 0) continue;
 
-            BigDecimal taxableInBracket;
-            if (bracketEnd == null) {
-                // Top (open-ended) bracket
-                taxableInBracket = grossSalary.subtract(bracketStart);
-            } else {
-                BigDecimal effectiveEnd = bracketEnd.min(grossSalary);
-                taxableInBracket = effectiveEnd.subtract(bracketStart).max(BigDecimal.ZERO);
-            }
+            // Switch expression: compute taxable portion based on bracket type
+            BigDecimal taxableInBracket = switch (bracketKind(bracket)) {
+                case OPEN_ENDED -> // Top bracket: no upper bound
+                        grossSalary.subtract(bracketStart);
+                case BOUNDED    -> // Regular bracket: cap at upper bound or salary
+                        bracket.upperBound().min(grossSalary)
+                                .subtract(bracketStart)
+                                .max(BigDecimal.ZERO);
+            };
 
             tax = tax.add(taxableInBracket.multiply(bracket.rate()));
             remaining = remaining.subtract(taxableInBracket);
         }
 
         return tax.setScale(SCALE, ROUNDING);
+    }
+
+    // -------------------------------------------------------------------------
+    // Bracket classification for switch expression
+    // -------------------------------------------------------------------------
+
+    /**
+     * Classifies a bracket as either {@code OPEN_ENDED} (no upper bound)
+     * or {@code BOUNDED} (finite upper bound).  Used as the selector for the
+     * switch expression inside {@link #calculateTax(BigDecimal)}.
+     */
+    private enum BracketKind { OPEN_ENDED, BOUNDED }
+
+    private static BracketKind bracketKind(Bracket bracket) {
+        return bracket.upperBound() == null ? BracketKind.OPEN_ENDED : BracketKind.BOUNDED;
     }
 
     @Override
