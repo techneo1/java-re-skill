@@ -49,6 +49,20 @@
       <version>5.11.0</version>
       <scope>test</scope>
     </dependency>
+
+    <!-- H2 Database (embedded JDBC database) -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>2.2.224</version>
+    </dependency>
+
+    <!-- HikariCP (connection pooling) -->
+    <dependency>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>HikariCP</artifactId>
+      <version>5.1.0</version>
+    </dependency>
   </dependencies>
 
   <build>
