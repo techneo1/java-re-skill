@@ -104,8 +104,7 @@ public final class ErrorContext {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof ErrorContext)) return false;
-        ErrorContext that = (ErrorContext) o;
+        if (!(o instanceof ErrorContext that)) return false;
         return errorCode == that.errorCode
                 && message.equals(that.message)
                 && timestamp.equals(that.timestamp)

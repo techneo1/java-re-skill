@@ -63,8 +63,7 @@ public final class PayrollRecord {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof PayrollRecord)) return false;
-        PayrollRecord p = (PayrollRecord) o;
+        if (!(o instanceof PayrollRecord p)) return false;
         return Objects.equals(id, p.id);
     }
 

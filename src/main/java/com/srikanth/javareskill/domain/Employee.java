@@ -58,8 +58,7 @@ public final class Employee {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Employee)) return false;
-        Employee e = (Employee) o;
+        if (!(o instanceof Employee e)) return false;
         return Objects.equals(id, e.id);
     }
 

@@ -49,8 +49,7 @@ public class EmployeeId {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof EmployeeId)) return false;
-        EmployeeId other = (EmployeeId) o;
+        if (!(o instanceof EmployeeId other)) return false;
         return value.equals(other.value);
     }
 
