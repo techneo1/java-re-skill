@@ -130,5 +130,59 @@ public final class ConnectionManager {
     public static boolean isInitialized() {
         return dataSource != null && !dataSource.isClosed();
     }
+
+    /**
+     * Returns the HikariCP data source for advanced operations.
+     *
+     * <p>Useful for monitoring pool statistics via JMX or accessing
+     * HikariCP-specific features.</p>
+     *
+     * @return the HikariDataSource instance, or {@code null} if not initialized
+     */
+    public static HikariDataSource getDataSource() {
+        return dataSource;
+    }
+
+    /**
+     * Returns connection pool statistics as a formatted string.
+     *
+     * <p>Provides real-time metrics about pool usage, useful for monitoring
+     * and troubleshooting performance issues.</p>
+     *
+     * @return formatted pool statistics, or "Not initialized" if pool is not active
+     */
+    public static String getPoolStats() {
+        if (dataSource == null) {
+            return "Connection pool not initialized";
+        }
+
+        return String.format("""
+            HikariCP Pool Statistics:
+            ───────────────────────────────────────
+            Active Connections:   %d
+            Idle Connections:     %d
+            Total Connections:    %d
+            Threads Awaiting:     %d
+            Max Pool Size:        %d
+            Min Idle:             %d
+            ───────────────────────────────────────
+            """,
+            dataSource.getHikariPoolMXBean().getActiveConnections(),
+            dataSource.getHikariPoolMXBean().getIdleConnections(),
+            dataSource.getHikariPoolMXBean().getTotalConnections(),
+            dataSource.getHikariPoolMXBean().getThreadsAwaitingConnection(),
+            dataSource.getMaximumPoolSize(),
+            dataSource.getMinimumIdle()
+        );
+    }
+
+    /**
+     * Prints connection pool statistics to standard output.
+     *
+     * <p>Convenience method for debugging and monitoring.</p>
+     */
+    public static void printPoolStats() {
+        System.out.println(getPoolStats());
+    }
 }
 
