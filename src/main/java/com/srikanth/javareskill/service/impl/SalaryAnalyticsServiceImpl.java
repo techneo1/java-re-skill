@@ -1,6 +1,7 @@
 package com.srikanth.javareskill.service.impl;
 
 import com.srikanth.javareskill.domain.Employee;
+import com.srikanth.javareskill.domain.enums.EmployeeStatus;
 import com.srikanth.javareskill.domain.enums.Role;
 import com.srikanth.javareskill.service.EmployeeService;
 import com.srikanth.javareskill.service.SalaryAnalyticsService;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
  *   <li>{@code sorted(Comparator.reversed())}       – {@link #topNHighestSalaries(int)}</li>
  *   <li>{@code limit(n)}                            – {@link #topNHighestSalaries(int)}</li>
  *   <li>{@code Collectors.groupingBy + averaging}   – {@link #averageSalaryPerRole()}</li>
+ *   <li>{@code Collectors.partitioningBy}           – {@link #partitionByStatus()}</li>
  *   <li>{@code map + reduce}                        – {@link #totalSalaryBill()}</li>
  *   <li>{@code max / min(Comparator)}               – {@link #maxSalary()}, {@link #minSalary()}</li>
  * </ul>
@@ -132,6 +134,24 @@ public final class SalaryAnalyticsServiceImpl implements SalaryAnalyticsService 
         return employeeService.findAll().stream()
                 .map(Employee::getSalary)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Uses {@code Collectors.partitioningBy} with the predicate
+     * {@code employee.getStatus() == EmployeeStatus.ACTIVE}.  The collector
+     * always produces a two-entry map ({@code true} / {@code false}) even
+     * when one partition is empty.</p>
+     */
+    @Override
+    public Map<Boolean, List<Employee>> partitionByStatus() {
+        return employeeService.findAll().stream()
+                .collect(Collectors.partitioningBy(
+                        e -> e.getStatus() == EmployeeStatus.ACTIVE,
+                        Collectors.collectingAndThen(
+                                Collectors.toList(),
+                                Collections::unmodifiableList)));
     }
 
     // -------------------------------------------------------------------------

@@ -42,6 +42,11 @@ class SalaryAnalyticsServiceTest {
     // -------------------------------------------------------------------------
 
     private static Employee emp(String id, String deptId, Role role, String salary) {
+        return emp(id, deptId, role, salary, EmployeeStatus.ACTIVE);
+    }
+
+    private static Employee emp(String id, String deptId, Role role, String salary,
+                                EmployeeStatus status) {
         return Employee.builder()
                 .id(id)
                 .name("Name-" + id)
@@ -49,7 +54,7 @@ class SalaryAnalyticsServiceTest {
                 .departmentId(deptId)
                 .role(role)
                 .salary(new BigDecimal(salary))
-                .status(EmployeeStatus.ACTIVE)
+                .status(status)
                 .joiningDate(LocalDate.of(2023, 1, 1))
                 .build();
     }
@@ -416,6 +421,144 @@ class SalaryAnalyticsServiceTest {
             when(employeeService.findAll()).thenReturn(List.of(E3));
 
             assertThat(analytics.totalSalaryBill()).isEqualByComparingTo("95000");
+        }
+    }
+
+    // =========================================================================
+    // partitionByStatus()
+    // =========================================================================
+
+    @Nested
+    @DisplayName("partitionByStatus()")
+    class PartitionByStatusTests {
+
+        private static final Employee INACTIVE_E1 =
+                emp("I001", "D1", Role.ENGINEER, "45000", EmployeeStatus.INACTIVE);
+        private static final Employee INACTIVE_E2 =
+                emp("I002", "D2", Role.ANALYST,  "38000", EmployeeStatus.INACTIVE);
+
+        @Test
+        @DisplayName("partitions active and inactive employees correctly")
+        void partitionsCorrectly() {
+            when(employeeService.findAll()).thenReturn(
+                    List.of(E1, E2, INACTIVE_E1, E3, INACTIVE_E2));
+
+            Map<Boolean, List<Employee>> partitioned = analytics.partitionByStatus();
+
+            assertThat(partitioned.get(true))
+                    .as("active employees")
+                    .containsExactlyInAnyOrder(E1, E2, E3);
+            assertThat(partitioned.get(false))
+                    .as("inactive employees")
+                    .containsExactlyInAnyOrder(INACTIVE_E1, INACTIVE_E2);
+        }
+
+        @Test
+        @DisplayName("map always has both keys even when one partition is empty")
+        void allActive_inactivePartitionIsEmpty() {
+            when(employeeService.findAll()).thenReturn(List.of(E1, E2));
+
+            Map<Boolean, List<Employee>> partitioned = analytics.partitionByStatus();
+
+            assertThat(partitioned).containsKeys(true, false);
+            assertThat(partitioned.get(true)).hasSize(2);
+            assertThat(partitioned.get(false)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("all inactive → active partition is empty")
+        void allInactive_activePartitionIsEmpty() {
+            when(employeeService.findAll()).thenReturn(List.of(INACTIVE_E1, INACTIVE_E2));
+
+            Map<Boolean, List<Employee>> partitioned = analytics.partitionByStatus();
+
+            assertThat(partitioned.get(true)).isEmpty();
+            assertThat(partitioned.get(false)).hasSize(2);
+        }
+
+        @Test
+        @DisplayName("empty employee list → both partitions are empty")
+        void emptyEmployees_bothPartitionsEmpty() {
+            when(employeeService.findAll()).thenReturn(Collections.emptyList());
+
+            Map<Boolean, List<Employee>> partitioned = analytics.partitionByStatus();
+
+            assertThat(partitioned).containsKeys(true, false);
+            assertThat(partitioned.get(true)).isEmpty();
+            assertThat(partitioned.get(false)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("partition lists are unmodifiable")
+        void partitionLists_areUnmodifiable() {
+            when(employeeService.findAll()).thenReturn(List.of(E1));
+
+            Map<Boolean, List<Employee>> partitioned = analytics.partitionByStatus();
+
+            assertThatThrownBy(() -> partitioned.get(true).add(E2))
+                    .isInstanceOf(UnsupportedOperationException.class);
+            assertThatThrownBy(() -> partitioned.get(false).add(E2))
+                    .isInstanceOf(UnsupportedOperationException.class);
+        }
+
+        @Test
+        @DisplayName("total count across both partitions equals findAll() size")
+        void totalCount_matchesFindAll() {
+            List<Employee> all = List.of(E1, E2, INACTIVE_E1, E3, INACTIVE_E2, E4);
+            when(employeeService.findAll()).thenReturn(all);
+
+            Map<Boolean, List<Employee>> partitioned = analytics.partitionByStatus();
+
+            int total = partitioned.get(true).size() + partitioned.get(false).size();
+            assertThat(total).isEqualTo(all.size());
+        }
+    }
+
+    // =========================================================================
+    // activeEmployees() / inactiveEmployees() convenience methods
+    // =========================================================================
+
+    @Nested
+    @DisplayName("activeEmployees() / inactiveEmployees()")
+    class ConvenienceMethodTests {
+
+        private static final Employee INACTIVE_E1 =
+                emp("I001", "D1", Role.HR, "42000", EmployeeStatus.INACTIVE);
+
+        @Test
+        @DisplayName("activeEmployees() returns only ACTIVE employees")
+        void activeEmployees_returnsOnlyActive() {
+            when(employeeService.findAll()).thenReturn(List.of(E1, INACTIVE_E1, E2));
+
+            List<Employee> active = analytics.activeEmployees();
+
+            assertThat(active).containsExactlyInAnyOrder(E1, E2);
+        }
+
+        @Test
+        @DisplayName("inactiveEmployees() returns only INACTIVE employees")
+        void inactiveEmployees_returnsOnlyInactive() {
+            when(employeeService.findAll()).thenReturn(List.of(E1, INACTIVE_E1, E2));
+
+            List<Employee> inactive = analytics.inactiveEmployees();
+
+            assertThat(inactive).containsExactly(INACTIVE_E1);
+        }
+
+        @Test
+        @DisplayName("activeEmployees() returns empty list when all are inactive")
+        void activeEmployees_emptyWhenAllInactive() {
+            when(employeeService.findAll()).thenReturn(List.of(INACTIVE_E1));
+
+            assertThat(analytics.activeEmployees()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("inactiveEmployees() returns empty list when all are active")
+        void inactiveEmployees_emptyWhenAllActive() {
+            when(employeeService.findAll()).thenReturn(List.of(E1, E2));
+
+            assertThat(analytics.inactiveEmployees()).isEmpty();
         }
     }
 

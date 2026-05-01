@@ -1,6 +1,7 @@
 package com.srikanth.javareskill.service;
 
 import com.srikanth.javareskill.domain.Employee;
+import com.srikanth.javareskill.domain.enums.EmployeeStatus;
 import com.srikanth.javareskill.domain.enums.Role;
 
 import java.math.BigDecimal;
@@ -17,9 +18,10 @@ import java.util.Map;
  *
  * <h2>Stream operations showcased</h2>
  * <ul>
- *   <li>{@code Collectors.groupingBy}   – group employees by department</li>
- *   <li>{@code sorted / limit}          – find top-N highest salaries</li>
- *   <li>{@code Collectors.toMap}        – compute average salary per role</li>
+ *   <li>{@code Collectors.groupingBy}        – group employees by department</li>
+ *   <li>{@code sorted / limit}               – find top-N highest salaries</li>
+ *   <li>{@code Collectors.toMap}             – compute average salary per role</li>
+ *   <li>{@code Collectors.partitioningBy}    – partition active vs inactive employees</li>
  *   <li>{@code mapToLong / summaryStatistics} – aggregate salary statistics</li>
  * </ul>
  */
@@ -87,5 +89,42 @@ public interface SalaryAnalyticsService {
      *         no employees
      */
     BigDecimal totalSalaryBill();
+
+    /**
+     * Partitions all employees into two groups: active and inactive.
+     *
+     * <p>Uses {@link java.util.stream.Collectors#partitioningBy} with the
+     * predicate {@code status == ACTIVE}.  The resulting map always has
+     * exactly two keys: {@code true} (active) and {@code false} (inactive).</p>
+     *
+     * @return an unmodifiable map with {@code Boolean} keys;
+     *         {@code true} → active employees, {@code false} → inactive employees;
+     *         both lists are never {@code null} (may be empty)
+     */
+    Map<Boolean, List<Employee>> partitionByStatus();
+
+    /**
+     * Returns only the active employees.
+     *
+     * <p>Convenience shortcut equivalent to
+     * {@code partitionByStatus().get(true)}.</p>
+     *
+     * @return unmodifiable list of active employees; never {@code null}
+     */
+    default List<Employee> activeEmployees() {
+        return partitionByStatus().get(true);
+    }
+
+    /**
+     * Returns only the inactive employees.
+     *
+     * <p>Convenience shortcut equivalent to
+     * {@code partitionByStatus().get(false)}.</p>
+     *
+     * @return unmodifiable list of inactive employees; never {@code null}
+     */
+    default List<Employee> inactiveEmployees() {
+        return partitionByStatus().get(false);
+    }
 }
 
