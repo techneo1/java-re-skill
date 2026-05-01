@@ -53,12 +53,10 @@ public final class AppConfig {
 
     @Override
     public String toString() {
-        return "AppConfig{" +
-                "appName='" + appName + '\'' +
-                ", maxEmployees=" + maxEmployees +
-                ", defaultSalary=" + defaultSalary +
-                ", auditEnabled=" + auditEnabled +
-                '}';
+        return """
+                AppConfig{appName='%s', maxEmployees=%d, \
+                defaultSalary=%s, auditEnabled=%b}\
+                """.formatted(appName, maxEmployees, defaultSalary, auditEnabled);
     }
 
     // -------------------------------------------------------------------------

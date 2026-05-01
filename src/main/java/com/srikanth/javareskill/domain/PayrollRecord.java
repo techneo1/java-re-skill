@@ -75,15 +75,10 @@ public final class PayrollRecord {
 
     @Override
     public String toString() {
-        return "PayrollRecord{" +
-                "id='" + id + '\'' +
-                ", employeeId='" + employeeId + '\'' +
-                ", grossSalary=" + grossSalary +
-                ", taxAmount=" + taxAmount +
-                ", netSalary=" + netSalary +
-                ", payrollMonth=" + payrollMonth +
-                ", processedTimestamp=" + processedTimestamp +
-                '}';
+        return """
+                PayrollRecord{id='%s', employeeId='%s', grossSalary=%s, \
+                taxAmount=%s, netSalary=%s, payrollMonth=%s, processedTimestamp=%s}\
+                """.formatted(id, employeeId, grossSalary, taxAmount, netSalary, payrollMonth, processedTimestamp);
     }
 
     // -------------------------------------------------------------------------

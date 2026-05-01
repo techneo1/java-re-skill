@@ -70,16 +70,10 @@ public final class Employee {
 
     @Override
     public String toString() {
-        return "Employee{" +
-                "id='" + id + '\'' +
-                ", name='" + name + '\'' +
-                ", email='" + email + '\'' +
-                ", departmentId='" + departmentId + '\'' +
-                ", role=" + role +
-                ", salary=" + salary +
-                ", status=" + status +
-                ", joiningDate=" + joiningDate +
-                '}';
+        return """
+                Employee{id='%s', name='%s', email='%s', departmentId='%s', \
+                role=%s, salary=%s, status=%s, joiningDate=%s}\
+                """.formatted(id, name, email, departmentId, role, salary, status, joiningDate);
     }
 
     // -------------------------------------------------------------------------

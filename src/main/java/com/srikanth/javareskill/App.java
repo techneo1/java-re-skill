@@ -5,17 +5,23 @@ import com.srikanth.javareskill.domain.Employee;
 import com.srikanth.javareskill.domain.EmployeeId;
 import com.srikanth.javareskill.domain.enums.EmployeeStatus;
 import com.srikanth.javareskill.domain.enums.Role;
+import com.srikanth.javareskill.domain.PayrollRecord;
+import com.srikanth.javareskill.payroll.PayrollService;
+import com.srikanth.javareskill.payroll.impl.PayrollServiceImpl;
 import com.srikanth.javareskill.repository.inmemory.InMemoryDepartmentRepository;
 import com.srikanth.javareskill.repository.inmemory.InMemoryEmployeeRepository;
 import com.srikanth.javareskill.service.DepartmentService;
 import com.srikanth.javareskill.service.EmployeeService;
+import com.srikanth.javareskill.service.SalaryAnalyticsService;
 import com.srikanth.javareskill.service.ValidationService;
 import com.srikanth.javareskill.service.impl.DepartmentServiceImpl;
 import com.srikanth.javareskill.service.impl.EmployeeServiceImpl;
+import com.srikanth.javareskill.service.impl.SalaryAnalyticsServiceImpl;
 import com.srikanth.javareskill.service.impl.ValidationServiceImpl;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * Entry point for the java-re-skill project.
@@ -75,6 +81,29 @@ public class App {
         // Look up by ID (value object in domain layer)
         empService.findById(new EmployeeId("E001"))
                 .ifPresent(e -> System.out.println("Found       : " + e.getName()));
+
+        // ── Salary Analytics (Streams API) ─────────────────────────────────
+        SalaryAnalyticsService analytics = new SalaryAnalyticsServiceImpl(empService);
+
+        System.out.println("\n--- Salary Analytics ---");
+        System.out.println("Total bill  : " + analytics.totalSalaryBill());
+        System.out.println("Max salary  : " + analytics.maxSalary());
+        System.out.println("Min salary  : " + analytics.minSalary());
+        System.out.println("Top 1       : " + analytics.topNHighestSalaries(1).get(0).getName());
+        System.out.println("Avg by role : " + analytics.averageSalaryPerRole());
+        System.out.println("By dept     : " + analytics.groupByDepartment().keySet());
+        System.out.println("Active/Inactive partition sizes: "
+                + analytics.partitionByStatus().get(true).size() + " / "
+                + analytics.partitionByStatus().get(false).size());
+
+        // ── Payroll Processing (Strategy Pattern) ──────────────────────────
+        PayrollService payrollService = new PayrollServiceImpl();
+        LocalDate payMonth = LocalDate.of(2026, 5, 1);
+
+        System.out.println("\n--- Payroll Processing ---");
+        List<PayrollRecord> records = payrollService.processAll(empService.findAll(), payMonth);
+        records.forEach(r -> System.out.printf("  %s → gross=%s, tax=%s, net=%s%n",
+                r.getEmployeeId(), r.getGrossSalary(), r.getTaxAmount(), r.getNetSalary()));
 
         System.out.println("\njava-re-skill — layered architecture ready!");
     }

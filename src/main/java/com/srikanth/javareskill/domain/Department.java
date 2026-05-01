@@ -46,11 +46,9 @@ public final class Department {
 
     @Override
     public String toString() {
-        return "Department{" +
-                "id='" + id + '\'' +
-                ", name='" + name + '\'' +
-                ", location='" + location + '\'' +
-                '}';
+        return """
+                Department{id='%s', name='%s', location='%s'}\
+                """.formatted(id, name, location);
     }
 
     // -------------------------------------------------------------------------
