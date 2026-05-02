@@ -14,11 +14,21 @@ import java.util.Objects;
  * is exhaustive — a compile-time error occurs if a new constant is added
  * to {@link Role} without a corresponding arm here.</p>
  *
- * <ul>
- *   <li>DIRECTOR / SENIOR_MANAGER → Progressive (multi-bracket)</li>
- *   <li>MANAGER / SENIOR_ENGINEER → Flat 20 %</li>
- *   <li>ENGINEER / ANALYST / HR   → Flat 10 %</li>
- * </ul>
+ * <h2>Default strategy: {@link SalaryBandTaxStrategy}</h2>
+ * <p>All roles now use {@link SalaryBandTaxStrategy}, which picks a single
+ * flat rate based on the employee's <em>total</em> gross salary band:</p>
+ * <pre>
+ * ┌────────────────────────────┬──────────┐
+ * │ Gross salary               │ Tax rate │
+ * ├────────────────────────────┼──────────┤
+ * │ &lt; 50 000                   │   10 %   │
+ * │ 50 000 – 100 000 inclusive │   20 %   │
+ * │ &gt; 100 000                  │   30 %   │
+ * └────────────────────────────┴──────────┘
+ * </pre>
+ *
+ * <p>Individual roles can still be overridden at runtime via
+ * {@link #register(Role, TaxStrategy)} (OCP – Open/Closed Principle).</p>
  *
  * <h2>Java switch-expression features demonstrated</h2>
  * <ul>
@@ -72,10 +82,18 @@ public final class TaxStrategyFactory {
         }
 
         // 2. Built-in mapping via switch expression (exhaustive, no default)
+        //    All roles delegate to SalaryBandTaxStrategy:
+        //      < 50 000      → 10 %
+        //      50 000–100 000 → 20 %
+        //      > 100 000     → 30 %
         return switch (role) {
-            case DIRECTOR, SENIOR_MANAGER -> new ProgressiveTaxStrategy();
-            case MANAGER, SENIOR_ENGINEER -> new FlatRateTaxStrategy(0.20);
-            case ENGINEER, ANALYST, HR    -> new FlatRateTaxStrategy(0.10);
+            case ENGINEER,
+                 SENIOR_ENGINEER,
+                 MANAGER,
+                 SENIOR_MANAGER,
+                 ANALYST,
+                 HR,
+                 DIRECTOR -> new SalaryBandTaxStrategy();
         };
     }
 
