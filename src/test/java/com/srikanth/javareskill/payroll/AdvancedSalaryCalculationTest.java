@@ -212,7 +212,7 @@ class AdvancedSalaryCalculationTest {
         BigDecimal salary = new BigDecimal(salaryStr);
         TaxStrategy flatRate = new FlatRateTaxStrategy(0.20);
         TaxStrategy progressive = new ProgressiveTaxStrategy();
-        TaxStrategy exempt = new ExemptTaxStrategy();
+        TaxStrategy exempt = ExemptTaxStrategy.INSTANCE;
 
         // Act
         BigDecimal flatTax = flatRate.calculateTax(salary);

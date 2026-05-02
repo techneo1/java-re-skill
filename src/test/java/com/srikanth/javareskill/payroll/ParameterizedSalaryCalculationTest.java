@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.*;
@@ -156,7 +157,7 @@ class ParameterizedSalaryCalculationTest {
     void testExemptTaxCalculation(String salaryStr) {
         // Arrange
         BigDecimal salary = new BigDecimal(salaryStr);
-        TaxStrategy strategy = new ExemptTaxStrategy();
+        TaxStrategy strategy = ExemptTaxStrategy.INSTANCE;
 
         // Act
         BigDecimal tax = strategy.calculateTax(salary);
@@ -171,7 +172,7 @@ class ParameterizedSalaryCalculationTest {
     void testNetSalaryForExempt(String salaryStr) {
         // Arrange
         BigDecimal salary = new BigDecimal(salaryStr);
-        TaxStrategy strategy = new ExemptTaxStrategy();
+        TaxStrategy strategy = ExemptTaxStrategy.INSTANCE;
 
         // Act
         BigDecimal tax = strategy.calculateTax(salary);
@@ -257,7 +258,7 @@ class ParameterizedSalaryCalculationTest {
         BigDecimal salary = new BigDecimal(salaryStr);
         TaxStrategy flatRate = new FlatRateTaxStrategy(0.20);      // 20%
         TaxStrategy progressive = new ProgressiveTaxStrategy();
-        TaxStrategy exempt = new ExemptTaxStrategy();
+        TaxStrategy exempt = ExemptTaxStrategy.INSTANCE;
 
         // Act
         BigDecimal flatTax = flatRate.calculateTax(salary);

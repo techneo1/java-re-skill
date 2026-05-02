@@ -10,6 +10,7 @@ import com.srikanth.javareskill.service.DepartmentService;
 import com.srikanth.javareskill.service.EmployeeService;
 import com.srikanth.javareskill.service.impl.DepartmentServiceImpl;
 import com.srikanth.javareskill.service.impl.EmployeeServiceImpl;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -24,6 +25,7 @@ import org.springframework.context.annotation.Configuration;
  * two worlds.</p>
  */
 @Configuration
+@EnableConfigurationProperties(AppProperties.class)
 public class SpringAppConfig {
 
     // ── Repositories ─────────────────────────────────────────────────────────
@@ -61,4 +63,3 @@ public class SpringAppConfig {
         return new PayrollServiceImpl();
     }
 }
-

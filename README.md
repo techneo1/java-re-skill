@@ -10,6 +10,7 @@ A hands-on Java re-skilling project covering core Java concepts through a small 
 |------|---------|
 | Java | 17 |
 | Maven | 3.x |
+| Spring Boot | 3.2.5 |
 | JUnit 5 | 5.10.2 |
 | AssertJ | 3.25.3 |
 
@@ -198,10 +199,85 @@ The resulting JAR will be at `target/java-re-skill-1.0.0-SNAPSHOT.jar`.
 
 ---
 
+## Running the Application
+
+### Default (dev profile)
+
+```bash
+# Maven plugin — activates the 'dev' profile automatically
+mvn spring-boot:run
+```
+
+### Explicit profile selection
+
+```bash
+# Dev profile (verbose logging, H2 console at http://localhost:8080/h2-console)
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
+
+# Test profile (random port, minimal logging, no H2 console)
+mvn spring-boot:run -Dspring-boot.run.profiles=test
+```
+
+### Fat-jar (after `mvn package`)
+
+```bash
+# Dev
+java -jar target/java-re-skill-1.0.0-SNAPSHOT.jar --spring.profiles.active=dev
+
+# Test
+java -jar target/java-re-skill-1.0.0-SNAPSHOT.jar --spring.profiles.active=test
+```
+
+### IDE run configuration
+
+Add the following VM argument to your run configuration:
+
+```
+-Dspring.profiles.active=dev
+```
+
+---
+
+## Spring Profiles
+
+| Setting | `dev` | `test` |
+|---|---|---|
+| Server port | `8080` | `0` (random) |
+| Stack-trace in errors | ✅ always | ❌ never |
+| H2 web console | ✅ `/h2-console` | ❌ disabled |
+| DevTools auto-restart | ✅ enabled | ❌ disabled |
+| H2 database name | `hrdb-dev` | `hrdb-test` |
+| App log level | `DEBUG` | `INFO` |
+| Spring log level | `INFO` | `WARN` |
+| `app.max-employees` | `1000` | `50` |
+| `app.audit.enabled` | `true` | `false` |
+
+Profile-specific files:
+
+```
+src/main/resources/
+├── application.properties          ← shared base (Jackson, app name, default profile)
+├── application-dev.properties      ← dev overrides
+└── application-test.properties     ← test overrides (main classpath)
+
+src/test/resources/
+└── application-test.properties     ← test overrides (test classpath / @ActiveProfiles)
+```
+
+---
+
 ## Configuration
 
-Application settings are managed via `src/main/resources/app.properties`.  
-`ConfigLoader` reads these properties at startup and exposes them through `AppConfig`.
+Application settings are managed via Spring Boot profile properties files.  
+`AppProperties` (`@ConfigurationProperties(prefix = "app")`) binds the `app.*` keys
+as a typed bean injectable anywhere in the application.
+
+| Property | dev default | test default |
+|---|---|---|
+| `app.env` | `dev` | `test` |
+| `app.max-employees` | `1000` | `50` |
+| `app.default-salary` | `50000.00` | `30000.00` |
+| `app.audit.enabled` | `true` | `false` |
 
 ---
 
