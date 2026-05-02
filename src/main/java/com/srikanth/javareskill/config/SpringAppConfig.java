@@ -4,6 +4,7 @@ import com.srikanth.javareskill.payroll.PayrollService;
 import com.srikanth.javareskill.payroll.impl.PayrollServiceImpl;
 import com.srikanth.javareskill.repository.DepartmentRepository;
 import com.srikanth.javareskill.repository.EmployeeRepository;
+import com.srikanth.javareskill.repository.InMemoryPayrollRepository;
 import com.srikanth.javareskill.repository.inmemory.InMemoryDepartmentRepository;
 import com.srikanth.javareskill.repository.inmemory.InMemoryEmployeeRepository;
 import com.srikanth.javareskill.service.DepartmentService;
@@ -61,5 +62,10 @@ public class SpringAppConfig {
     @Bean
     public PayrollService payrollService() {
         return new PayrollServiceImpl();
+    }
+
+    @Bean
+    public InMemoryPayrollRepository payrollRepository() {
+        return new InMemoryPayrollRepository();
     }
 }
